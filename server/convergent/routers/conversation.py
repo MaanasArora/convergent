@@ -253,3 +253,19 @@ async def vote_on_comment(
     update_conversation_analysis(comment.conversation, db)
 
     return {"id": db_vote.id}
+
+
+@router.delete("/conversations/{conversation_id}")
+async def delete_conversation(
+    conversation_id: UUID, db: Database, current_user: CurrentUser
+):
+    conversation = db.query(models.Conversation).get(conversation_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if conversation.author != current_user:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    db.delete(conversation)
+    db.commit()
+
+    return {"detail": "Conversation deleted successfully", "id": conversation_id}
