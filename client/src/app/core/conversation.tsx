@@ -1,12 +1,11 @@
 import { useParams } from "react-router";
 import CoreBase from "./base";
 import {
-  createComment,
   createVote,
   getConversation,
   getNextComment,
 } from "../../components/api/conversation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckIcon,
   ForwardIcon,
@@ -19,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getApi } from "../../components/api/base";
 import CommentConfig from "../../components/admin/comments/CommentConfig";
 
-type Comment = { content: string; id: string };
+type Comment = { content: string; id: string; num_votes: number };
 
 const VotingSection = ({
   comment,
@@ -68,29 +67,28 @@ const VotingSection = ({
 
 const ConversationPage = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [currentComment, setCurrentComment] = useState<Comment | null>(null);
-  const [commentNumber, setCommentNumber] = useState<number>(0);
 
+  const conversation = useQuery<Conversation>({
+    queryKey: ["current-conversation", conversationId],
+    queryFn: () => getConversation(conversationId ?? ""),
+  });
+
+  const currentComment = useQuery<{ comment: Comment; num_votes: number }>({
+    queryKey: ["current-comment", conversationId],
+    queryFn: () => getNextComment(conversationId ?? ""),
+  });
+
+  const amountOfVotedComments = useMemo(() => {
+    return currentComment.data?.num_votes ?? 0;
+  }, [currentComment]);
   const nextComment = async () => {
     if (!conversationId) return;
 
-    try {
-      const { comment, num_votes } = await getNextComment(conversationId);
-      setCurrentComment(comment);
-      setCommentNumber(num_votes + 1);
-    } catch (error: any) {
-      if (error.status === 404) {
-        setCurrentComment(null);
-      }
-    }
+    await currentComment.refetch();
   };
-
   const fetchConversation = async () => {
     if (!conversationId) return;
-
-    const data = await getConversation(conversationId);
-    setConversation(data);
+    await conversation.refetch();
   };
 
   // dialog logic
@@ -139,14 +137,20 @@ const ConversationPage = () => {
   });
   return (
     <CoreBase>
-      <main>
+      <main className="w-[95%] mx-auto">
         <section className="p-8">
-          <h1 className="text-3xl font-bold mb-4">{conversation?.name}</h1>
-          <p className="mb-4">{conversation?.description}</p>
+          <h1 className="text-3xl font-bold mb-4">{conversation.data?.name}</h1>
+          <p className="mb-4">{conversation.data?.description}</p>
         </section>
-        <section className="p-8 bg-background md:w-1/2">
+        <section
+          className="p-8 bg-background w-full flex flex-col"
+          aria-labelledby="active-comment-header"
+        >
           <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-secondary mb-4">
+            <h2
+              id="active-comment-header"
+              className="font-semibold text-secondary mb-4"
+            >
               Active Comments
             </h2>
             <Button
@@ -157,10 +161,10 @@ const ConversationPage = () => {
             </Button>
           </div>
 
-          {currentComment ? (
+          {currentComment.isSuccess ? (
             <VotingSection
-              comment={currentComment}
-              commentNumber={commentNumber}
+              comment={currentComment.data?.comment}
+              commentNumber={amountOfVotedComments + 1}
               onVote={onVote}
             />
           ) : (
@@ -168,6 +172,9 @@ const ConversationPage = () => {
               <p className="text-gray-500">No more comments to review.</p>
             </div>
           )}
+          <p className="text-center pt-6">
+            {amountOfVotedComments + 1} of {comments.data?.length} comments
+          </p>
         </section>
       </main>
       {!!conversationId && (
