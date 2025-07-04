@@ -1,6 +1,7 @@
 import CoreBase from "./base";
 import ConversationsList from "../../components/conversation/ConversationsList";
 
+// see server\convergent\routers\conversation.py
 export type Conversation = {
   id: string;
   name: string;
@@ -9,6 +10,7 @@ export type Conversation = {
   num_participants: number;
   date_created: string;
   is_active: boolean;
+  display_unmoderated: boolean;
 };
 
 export type Comment = {
@@ -16,6 +18,7 @@ export type Comment = {
   content: string;
 };
 
+// See server\convergent\routers\moderation.py
 export type ModerationComment = Comment & {
   user_id: string;
   approved: boolean | null;

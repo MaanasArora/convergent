@@ -5,7 +5,9 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/convergent
       - SECRET_KEY=your_secret_key
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+        restart: true
     ports:
       - "8000:8000"
 
@@ -17,3 +19,9 @@ services:
       POSTGRES_DB: convergent
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s

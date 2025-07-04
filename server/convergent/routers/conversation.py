@@ -24,6 +24,7 @@ class Conversation(BaseModel):
     description: str = None
     author: UserBasic
     num_participants: int = None
+    display_unmoderated: bool
     date_created: datetime = None
     is_active: bool = True
 

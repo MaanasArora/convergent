@@ -13,9 +13,9 @@ export default function ConversationConfig({
   type?: string;
   onComplete?: Function;
 }) {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
-  const [conversationId, setConversationId] = useState(editItem?.id ?? "");
+  // const [conversationId, setConversationId] = useState(editItem?.id ?? "");
 
   const [conversationName, setConversationName] = useState(
     editItem?.name ?? ""
@@ -24,9 +24,14 @@ export default function ConversationConfig({
     editItem?.description ?? ""
   );
 
-  const [updated, setUpdated] = useState(0);
+  const [
+    conversationAllowUnmoderatedComments,
+    setConversationAllowUnmoderatedComments,
+  ] = useState(editItem?.display_unmoderated ?? false);
 
-  function formSubmit(event: React.FormEvent<HTMLFormElement>) {
+  // const [updated, setUpdated] = useState(0);
+
+  async function formSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const newConversationRequestBody = {
@@ -36,17 +41,22 @@ export default function ConversationConfig({
     };
     if (!editItem)
       // new conversation
-      postApi("/conversations", newConversationRequestBody).then((resp) => {
-        setConversationId(resp.id);
-      });
+      await postApi("/conversations", newConversationRequestBody);
+    // .then((resp) => {
+    //   setConversationId(resp.id);
+    // });
     else {
       // edit conversation
-      putApi(`/conversations/${editItem?.id}`, newConversationRequestBody).then(
-        (resp) => {
-          setUpdated(Date.now());
-          setConversationId(resp.id);
-        }
+      await putApi(
+        `/conversations/${editItem?.id}`,
+        newConversationRequestBody
       );
+      // .then(
+      //   (resp) => {
+      //     setUpdated(Date.now());
+      //     setConversationId(resp.id);
+      //   }
+      // );
     }
     if (onComplete) {
       onComplete();
@@ -85,7 +95,6 @@ export default function ConversationConfig({
           value={conversationDescription}
           onChange={(event) => setConversationDescription(event.target.value)}
         ></Textarea>
-        {/* TODO: return unmoderated settings to checkbox */}
         <label htmlFor="display-unmoderated">
           Show unmoderated comments to participants
         </label>
@@ -94,6 +103,10 @@ export default function ConversationConfig({
           type="checkbox"
           name="display-unmoderated"
           id="display-unmoderated"
+          checked={conversationAllowUnmoderatedComments}
+          onChange={(event) =>
+            setConversationAllowUnmoderatedComments(event.target.checked)
+          }
         ></Input>
         <button className="border-4 border-green-500 p-2 bg-green-200 rounded-2xl">
           Submit
