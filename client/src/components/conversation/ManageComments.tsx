@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import CommentConfig from "../admin/comments/CommentConfig";
 
 export default function ManageComments() {
-  let params = useParams();
+  const params = useParams();
 
   const convoId = params.conversationId;
   const comments = useQuery<[]>({
@@ -44,7 +44,10 @@ export default function ManageComments() {
           Add
         </button>
       </div>
-      <CommentsTable comments={comments.data ?? []} />
+      <CommentsTable
+        onComplete={onFormComplete}
+        comments={comments.data ?? []}
+      />
       {!!convoId && (
         <dialog
           id="comment-dialog"

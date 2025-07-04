@@ -1,50 +1,13 @@
-import { createContext, ReactNode, useEffect, useState } from "react";
-import { getUserMe, postLogin, postLogout } from "../api/auth";
-
-type User = {
-  username: string;
-};
+import { createContext } from "react";
+import { type UseQueryResult } from "@tanstack/react-query";
+import { type User } from "./AuthProvider";
 
 export const AuthContext = createContext<{
-  user: User | null;
+  userStatus: UseQueryResult<User, Response> | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }>({
-  user: null,
+  userStatus: null,
   login: async () => {},
   logout: async () => {},
 });
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  const fetchUser = async () => {
-    try {
-      const user = await getUserMe();
-      setUser(user);
-    } catch (error) {
-      setUser(null);
-    }
-  };
-
-  const login = async (username: string, password: string) => {
-    await postLogin(username, password);
-    await fetchUser();
-  };
-
-  const logout = async () => {
-    await postLogout();
-    setUser(null);
-    window.location.href = "/login";
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};

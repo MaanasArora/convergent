@@ -11,7 +11,7 @@ export default function CommentConfig({
   onComplete?: Function;
 }) {
   const [comment, setComment] = useState("");
-  function formSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function formSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     // const formData = new FormData(event.target as HTMLFormElement);
     const newConversationRequestBody = {
@@ -19,7 +19,7 @@ export default function CommentConfig({
     };
     if (!editId) {
       // new conversation
-      postApi(
+      await postApi(
         `/conversations/${conversationId}/comments`,
         newConversationRequestBody
       );

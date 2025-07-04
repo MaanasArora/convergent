@@ -23,7 +23,7 @@ export type ModerationComment = Comment & {
 
 const DashboardPage = () => {
   return (
-    <CoreBase>
+    <CoreBase requiresLogin={true}>
       <ConversationsList />
     </CoreBase>
   );
