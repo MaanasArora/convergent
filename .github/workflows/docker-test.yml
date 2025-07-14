@@ -1,7 +1,7 @@
 name: "Docker build test"
 
 on:
-  push:
+  pull_request:
     branches: ["ma*"]
 
 env:
