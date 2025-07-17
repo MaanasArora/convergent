@@ -12,16 +12,16 @@ export const UserDropdown = ({
   return (
     <>
       {!isLoggedIn && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a
             href="/register"
-            className="mb-8 p-2 border-2 rounded-md hover:border-secondary hover:bg-secondary hover:text-white"
+            className="p-2 border-2 rounded-md hover:border-secondary hover:bg-secondary hover:text-white whitespace-nowrap"
           >
             Sign Up
           </a>
           <a
             href="/login"
-            className="mb-8 p-2 bg-gray-500 hover:bg-secondary text-white rounded-md"
+            className="p-2 bg-gray-500 hover:bg-secondary text-white rounded-md whitespace-nowrap"
           >
             Log In
           </a>

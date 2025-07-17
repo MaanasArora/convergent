@@ -11,7 +11,7 @@ const AppBar = ({ children }: { children: React.ReactNode }) => (
   >
     <div className="flex">
       <Logo />
-      <h1 className="ml-3 mr-16 text-xl font-bold">Convergent</h1>
+      <h1 className="ml-3 mr-8 text-xl font-bold">Convergent</h1>
     </div>
     <div className="flex items-center gap-4">
       <a className="max-sm:hidden" href="/home">
@@ -24,7 +24,7 @@ const AppBar = ({ children }: { children: React.ReactNode }) => (
         Contact
       </a>
     </div>
-    <div className="flex justify-end w-1/6">{children}</div>
+    <div className="flex justify-end">{children}</div>
   </div>
 );
 

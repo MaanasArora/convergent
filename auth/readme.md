@@ -1,5 +1,11 @@
 # Auth part
 
+## Run it
+
+```bash
+npx vite-node server.ts
+```
+
 ## References
 
 <https://www.better-auth.com/docs/installation>
