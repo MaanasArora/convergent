@@ -14,6 +14,11 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
 
+  useEffect(() => {
+    if (passkeys.length > 0) {
+      document.cookie = "hasPasskey=true";
+    }
+  }, [passkeys]);
   const navigate = useNavigate();
 
   const handleLogin = async (email: string, password: string) => {
@@ -26,6 +31,10 @@ const LoginPage = () => {
       } else {
         console.info("passkey signin success!");
       }
+
+      authClient.passkey.listUserPasskeys().then((data) => {
+        if (data.data) setPasskeys(data.data);
+      });
     } else {
       try {
         await login(email, password);
@@ -59,6 +68,10 @@ const LoginPage = () => {
   };
 
   useEffect(() => {
+    if (document.cookie.includes("hasPasskey=true")) {
+      setPasskeys([{ aaguid: "stored" }]);
+    }
+
     authClient.passkey.listUserPasskeys().then((data) => {
       if (data.data) setPasskeys(data.data);
     });
@@ -96,11 +109,23 @@ const LoginPage = () => {
           )}
           <h2 className="text-5xl font-bold mb-8">Sign In</h2>
           {passkeys.map((data) => (
-            <button className="border-2 border-gray-500 p-2 rounded-xl">
+            <button
+              type="button"
+              className="border-2 border-gray-500 p-2 rounded-xl"
+            >
               <h2>Passkey found! Click to continue</h2>
               {`${data.aaguid}`}
             </button>
           ))}
+          {passkeys.length > 0 && (
+            <button
+              type="button"
+              className="border-2 border-gray-500 p-2 rounded-xl"
+              onClick={() => authClient.signOut()}
+            >
+              Log out
+            </button>
+          )}
           {passkeys.length === 0 && (
             <>
               <input

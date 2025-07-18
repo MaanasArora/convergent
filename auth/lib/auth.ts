@@ -14,5 +14,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [passkey(), anonymous()],
+  plugins: [
+    passkey({
+      authenticatorSelection: {
+        residentKey: "discouraged",
+        userVerification: "discouraged",
+      },
+    }),
+    anonymous(),
+  ],
 });
