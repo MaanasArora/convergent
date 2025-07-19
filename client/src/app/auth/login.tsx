@@ -16,13 +16,13 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (passkeys.length > 0) {
-      document.cookie = "hasPasskey=true";
+      document.cookie = `passkey=${JSON.stringify(passkeys[0])}`;
     }
   }, [passkeys]);
   const navigate = useNavigate();
 
-  const handleLogin = async (email: string, password: string) => {
-    if (email === "" && password === "") {
+  const handleLogin = async (emailInput = email, passwordInput = password) => {
+    if (emailInput === "" && passwordInput === "") {
       // passkey test
       const data = await authClient.signIn.passkey();
 
@@ -37,7 +37,7 @@ const LoginPage = () => {
       });
     } else {
       try {
-        await login(email, password);
+        await login(emailInput, passwordInput);
         navigate("/dashboard");
       } catch (error: any) {
         if (error.status == 401) {
@@ -68,8 +68,11 @@ const LoginPage = () => {
   };
 
   useEffect(() => {
-    if (document.cookie.includes("hasPasskey=true")) {
-      setPasskeys([{ aaguid: "stored" }]);
+    const cookiePasskeyRecord = document.cookie.match(
+      new RegExp("passkey=([^;]+)")
+    )?.[1];
+    if (cookiePasskeyRecord) {
+      setPasskeys([JSON.parse(cookiePasskeyRecord)]);
     }
 
     authClient.passkey.listUserPasskeys().then((data) => {
@@ -112,6 +115,7 @@ const LoginPage = () => {
             <button
               type="button"
               className="border-2 border-gray-500 p-2 rounded-xl"
+              onClick={() => handleLogin()}
             >
               <h2>Passkey found! Click to continue</h2>
               {`${data.aaguid}`}
