@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "better-auth": "^1.2.12",
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
+  }
+}
