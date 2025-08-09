@@ -42,7 +42,7 @@ export function NewCommentDialog({
 
       <dialog
         id="comment-dialog"
-        className="md:m-[revert] p-[revert] md:border-2 backdrop:bg-primary backdrop:opacity-80 md:rounded-xl w-full max-w-3xl relative h-screen md:h-[revert]"
+        className="md:m-[revert] p-[revert] md:border-2 backdrop:bg-primary backdrop:opacity-80 md:rounded-xl w-full max-w-3xl relative h-screen md:h-[revert] overflow-visible"
       >
         <button
           type="button"

@@ -14,6 +14,8 @@ export default function CommentConfig({
   onCancel?: () => void;
 }) {
   const [comment, setComment] = useState("");
+  const [isHovering, setIsHovering] = useState(false);
+  
   async function formSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     // const formData = new FormData(event.target as HTMLFormElement);
@@ -66,17 +68,33 @@ export default function CommentConfig({
       <div className="flex gap-2 my-4 flex-wrap">
         <button
           type="button"
-          className="p-2 border-2 rounded-md hover:bg-red-800 hover:border-red-800 hover:text-white grow-1"
+          className="p-2 border-2 rounded-md hover:bg-red-800 hover:border-red-800 hover:text-white flex-1"
           onClick={onFormCancel}
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          className="p-2 bg-gray-500 hover:bg-secondary text-white rounded-md grow-1"
+        <div
+          className="relative flex-1"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
         >
-          Add Comment
-        </button>
+          <button
+            type="submit"
+            className={`p-2 bg-gray-500 text-white rounded-md w-full ${comment.trim() === "" ? "cursor-default" : "bg-secondary"}`}
+            disabled={comment.trim() === ""} 
+          >
+            Add Comment
+          </button>
+        </div>
+        {comment.trim() === "" && isHovering && (
+          <div 
+            className="absolute -bottom-12 left-1/2 -translate-x-1/2 bg-white border border-gray-300 rounded-md shadow px-3 py-1 text-sm text-gray-700 z-50 transition-opacity duration-300 ease-in-out"
+            role="tooltip"
+            aria-live="polite"
+          >
+            Comment is empty
+          </div>
+        )}
       </div>
     </form>
   );
