@@ -38,14 +38,32 @@ def cluster_users(
     return best_kmeans
 
 
+def get_group_comment_representativeness(
+    comment_votes: np.ndarray, cluster_labels: np.ndarray, cluster_index: int
+):
+    if cluster_index == -1:
+        return None
+
+    cluster_votes = comment_votes[cluster_labels == cluster_index]
+    not_cluster_votes = comment_votes[cluster_labels != cluster_index]
+
+    cluster_agree = np.sum(cluster_votes == 1)
+    not_cluster_agree = np.sum(not_cluster_votes == 1)
+
+    cluster_total = np.sum(~np.isnan(cluster_votes))
+    not_cluster_total = np.sum(~np.isnan(not_cluster_votes))
+
+    cluster_agree_prob = (1 + cluster_agree) / (2 + cluster_total)
+    not_cluster_agree_prob = (1 + not_cluster_agree) / (2 + not_cluster_total)
+
+    return cluster_agree_prob / not_cluster_agree_prob
+
+
 def get_comment_consensus(
-    votes_matrix: np.ndarray,
-    comment_index: int,
-    cluster_labels: np.ndarray = None,
+    comment_votes: np.ndarray,
+    cluster_labels: np.ndarray | None = None,
     kind="group_aware",
 ):
-    comment_votes = votes_matrix[:, comment_index]
-
     if kind == "group_aware":
         if cluster_labels is None:
             raise ValueError(
