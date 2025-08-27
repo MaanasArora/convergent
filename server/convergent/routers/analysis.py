@@ -122,24 +122,23 @@ def get_comment_analysis(
     conversation = db.get(models.Conversation, conversation_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
+
     votes, user_ids, comment_ids = get_vote_matrix(conversation)
     if comment.id not in comment_ids:
         raise HTTPException(status_code=404, detail="Comment not found in conversation")
-    
+
     comment_index = [i for i, cid in enumerate(comment_ids) if cid == comment.id][0]
     votes = votes[:, comment_index]
 
-    consensus = get_comment_consensus(votes, cluster_labels)
+    if cluster_labels is None:
+        consensus = None
+        representativeness = []
+    else:
+        consensus = get_comment_consensus(votes, cluster_labels)
+        representativeness = get_comment_representativeness(votes, cluster_labels)
     participation_rate = calculate_participation_rate(votes)
     vote_probabilities = get_comment_vote_probabilities(votes)
     consensus = float(consensus) if consensus is not None else 0.0
-
-    if cluster_labels is not None:
-        representativeness = get_comment_representativeness(votes, cluster_labels)
-    else:
-        representativeness = []
-
     total_votes = int(np.sum(~np.isnan(votes)))
 
     return CommentAnalysisResponse(
@@ -150,4 +149,34 @@ def get_comment_analysis(
         participation_rate=participation_rate,
         vote_probabilities=vote_probabilities,
         representativeness=representativeness,
+    )
+
+
+@router.get(
+    "/conversation/{conversation_id}", response_model=ConversationAnalysisResponse
+)
+def analyze_conversation(db: Database, conversation_id: UUID):
+    conversation = db.get(models.Conversation, conversation_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    comments = (
+        db.query(models.Comment)
+        .filter(models.Comment.conversation_id == conversation_id)
+        .all()
+    )
+
+    comment_analyses = [
+        get_comment_analysis(db, conversation_id, comment, cluster_labels)
+        for comment in comments
+    ]
+
+    groups = get_conversation_groups(db, conversation_id)
+
+    return ConversationAnalysisResponse(
+        conversation_id=conversation_id,
+        comment_ids=[comment.id for comment in comments],
+        user_ids=list({c.user_id for c in comments}),
+        comments=comment_analyses,
+        groups=groups,
     )
