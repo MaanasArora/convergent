@@ -5,185 +5,149 @@ from convergent.auth.user import CurrentUser
 from convergent.database import Database
 from pydantic import BaseModel
 import numpy as np
-from convergent_engine.math import get_comment_consensus
+from convergent_engine.math import (
+    get_comment_consensus,
+    get_group_comment_representativeness,
+)
 from convergent.core.routines import get_vote_matrix
 
 
 router = APIRouter(prefix="/analysis")
 
 
-class CommentStatistics(BaseModel):
-    id: UUID
-    content: str
-    consensus: float
-
-
-class Group(BaseModel):
+class CommentRepresentativeness(BaseModel):
     group_id: int
-    user_ids: list[UUID]
-    comment_vote_counts: dict[UUID, int]
-    variance: float = None
-    top_comments: list[CommentStatistics] = None
+    representativeness: float | None
 
 
-class Conversation(BaseModel):
-    id: UUID
-    user_ids: list[UUID]
+class CommentVoteProbabilities(BaseModel):
+    agree: float
+    disagree: float
+    skip: float
+
+
+class CommentAnalysisResponse(BaseModel):
+    comment_id: UUID
+    content: str
+    total_votes: int
+    consensus: float
+    participation_rate: float
+    vote_probabilities: CommentVoteProbabilities
+    representativeness: list[CommentRepresentativeness]
+
+
+class GroupAnalysisResponse(BaseModel):
+    group_id: int
+    users: list[UUID]
+
+
+class ConversationAnalysisResponse(BaseModel):
+    conversation_id: UUID
     comment_ids: list[UUID]
+    user_ids: list[UUID]
 
-    groups: list[Group] = None
-
-    num_votes: int = None
-    participation_rate: float = None
-    voting_rate: float = None
+    comments: list[CommentAnalysisResponse] | None = None
+    groups: list[GroupAnalysisResponse] | None = None
 
 
-def get_conversation_groups(conversation: models.Conversation, db: Database):
-    user_clusters = conversation.clusters
-    comments = conversation.comments
+def get_comment_vote_probabilities(votes: np.ndarray):
+    total_votes = np.sum(~np.isnan(votes))
+    if total_votes == 0:
+        return CommentVoteProbabilities(agree=0.0, disagree=0.0, skip=0.0)
 
-    groups = {}
-    for user_cluster in user_clusters:
-        group_id = user_cluster.cluster
+    agree = np.sum(votes == 1)
+    disagree = np.sum(votes == -1)
+    skip = np.sum(votes == 0)
 
-        if group_id not in groups:
-            groups[group_id] = {
-                "user_ids": [],
-                "comment_vote_counts": {comment.id: 0 for comment in comments},
-            }
+    return CommentVoteProbabilities(
+        agree=agree / total_votes,
+        disagree=disagree / total_votes,
+        skip=skip / total_votes,
+    )
 
-        votes = (
-            db.query(models.Vote)
+
+def calculate_participation_rate(votes: np.ndarray):
+    total_votes = np.sum(~np.isnan(votes))
+    if votes.size == 0:
+        return 0.0
+    return total_votes / votes.size
+
+
+def get_conversation_groups(
+    db: Database, conversation_id: UUID
+) -> list[GroupAnalysisResponse]:
+    group_ids = (
+        db.query(models.UserCluster.cluster)
+        .filter(models.UserCluster.conversation_id == conversation_id)
+        .distinct()
+        .all()
+    )
+    group_ids = [gid[0] for gid in group_ids]
+
+    groups = []
+    for group_id in group_ids:
+        users = (
+            db.query(models.UserCluster.user_id)
             .filter(
-                models.Vote.comment_id.in_([comment.id for comment in comments]),
-                models.Vote.user_id == user_cluster.user_id,
+                models.UserCluster.conversation_id == conversation_id,
+                models.UserCluster.cluster == group_id,
             )
             .all()
         )
+        user_ids = [u[0] for u in users]
+        groups.append(GroupAnalysisResponse(group_id=group_id, users=user_ids))
 
-        groups[group_id]["user_ids"].append(user_cluster.user_id)
-        for vote in votes:
-            groups[group_id]["comment_vote_counts"][vote.comment_id] += vote.value
-
-    for group_id, group in groups.items():
-        group["variance"] = np.var(list(group["comment_vote_counts"].values()), ddof=1)
-
-        top_comment_ids = list(
-            map(
-                lambda item: item[0],
-                sorted(
-                    group["comment_vote_counts"].items(),
-                    key=lambda item: item[1],
-                    reverse=True,
-                ),
-            )
-        )[:3]
-
-        top_comments = [
-            db.query(models.Comment).get(comment_id) for comment_id in top_comment_ids
-        ]
-
-        group["top_comments"] = [
-            {
-                "id": comment.id,
-                "content": comment.content,
-                "consensus": group["comment_vote_counts"][comment.id]
-                / len(user_clusters),
-            }
-            for comment in top_comments
-        ]
-
-    return [{"group_id": i, **group} for i, group in groups.items()]
+    return groups
 
 
-@router.get("/conversation/{conversation_id}/groups", response_model=list[Group])
-async def read_conversation_groups(
-    conversation_id: UUID, db: Database, current_user: CurrentUser
-):
-    conversation = db.query(models.Conversation).get(conversation_id)
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+def get_comment_representativeness(
+    votes: np.ndarray, cluster_labels: np.ndarray
+) -> list[CommentRepresentativeness]:
+    representativeness = []
+    unique_clusters = np.unique(cluster_labels)
+    for cluster_id in unique_clusters:
+        rep = get_group_comment_representativeness(votes, cluster_labels, cluster_id)
+        representativeness.append(
+            CommentRepresentativeness(group_id=int(cluster_id), representativeness=rep)
+        )
+    return representativeness
 
-    return get_conversation_groups(conversation, db)
 
-
-@router.get(
-    "/conversation/{conversation_id}",
-    response_model=Conversation,
-    response_model_exclude_none=True,
-)
-async def read_conversation(
-    conversation_id: UUID,
+def get_comment_analysis(
     db: Database,
-    current_user: CurrentUser,
-    include_groups: bool = False,
-    include_stats: bool = False,
-):
-    conversation = db.query(models.Conversation).get(conversation_id)
+    conversation_id: UUID,
+    comment: models.Comment,
+    cluster_labels: np.ndarray | None,
+) -> CommentAnalysisResponse:
+    conversation = db.get(models.Conversation, conversation_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    votes, user_ids, comment_ids = get_vote_matrix(conversation)
+    if comment.id not in comment_ids:
+        raise HTTPException(status_code=404, detail="Comment not found in conversation")
+    
+    comment_index = [i for i, cid in enumerate(comment_ids) if cid == comment.id][0]
+    votes = votes[:, comment_index]
 
-    voter_ids = set(cluster.user_id for cluster in conversation.clusters)
-    participant_ids = set(comment.user_id for comment in conversation.comments)
-    user_ids = list(voter_ids | participant_ids)
+    consensus = get_comment_consensus(votes, cluster_labels)
+    participation_rate = calculate_participation_rate(votes)
+    vote_probabilities = get_comment_vote_probabilities(votes)
+    consensus = float(consensus) if consensus is not None else 0.0
 
-    comment_ids = [comment.id for comment in conversation.comments]
+    if cluster_labels is not None:
+        representativeness = get_comment_representativeness(votes, cluster_labels)
+    else:
+        representativeness = []
 
-    response = {
-        "id": conversation_id,
-        "user_ids": user_ids,
-        "comment_ids": comment_ids,
-    }
+    total_votes = int(np.sum(~np.isnan(votes)))
 
-    if include_groups:
-        response["groups"] = get_conversation_groups(conversation, db)
-
-    if include_stats:
-        num_votes = (
-            db.query(models.Vote)
-            .filter(models.Vote.comment_id.in_(comment_ids))
-            .count()
-        )
-
-        response["num_votes"] = num_votes
-        response["num_participants"] = len(participant_ids)
-
-        response["participation_rate"] = len(participant_ids) / len(user_ids)
-        response["voting_rate"] = num_votes / (len(user_ids) * len(comment_ids))
-
-    return response
-
-
-@router.get(
-    "/conversation/{conversation_id}/comments",
-    response_model=list[CommentStatistics],
-)
-async def read_comments_with_consensus(
-    conversation_id: UUID, db: Database, current_user: CurrentUser
-):
-    conversation = db.query(models.Conversation).get(conversation_id)
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-
-    votes_matrix, user_index, comment_index = get_vote_matrix(conversation)
-
-    user_clusters = np.full(len(user_index), -1, dtype=int)  # Default to -1 for unclustered users
-    for cluster in conversation.clusters:
-        if cluster.user in user_index:
-            user_clusters[user_index[cluster.user]] = cluster.cluster
-        else:
-            raise ValueError(f"Cluster user {cluster.user} not found in user_index")
-
-    consensus_comments = []
-    for comment in conversation.comments:
-        comment_idx = comment_index.get(comment)
-        consensus = get_comment_consensus(votes_matrix, comment_idx, user_clusters)
-        consensus_comments.append(
-            {
-                "id": comment.id,
-                "content": comment.content,
-                "consensus": consensus,
-            }
-        )
-
-    return sorted(consensus_comments, key=lambda x: x["consensus"], reverse=True)
+    return CommentAnalysisResponse(
+        comment_id=comment.id,
+        content=comment.content,
+        total_votes=total_votes,
+        consensus=consensus,
+        participation_rate=participation_rate,
+        vote_probabilities=vote_probabilities,
+        representativeness=representativeness,
+    )
