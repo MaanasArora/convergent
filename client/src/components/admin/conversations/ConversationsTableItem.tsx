@@ -8,7 +8,6 @@ export const ConversationsTableItem = ({
 }: {
   conversation: Conversation;
 }) => {
-  const viewLink = `/conversation/${conversation.id}`;
   const editLink = `/conversation/${conversation.id}/edit`;
 
   return (
