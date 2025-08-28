@@ -65,7 +65,7 @@ export const ParticipationSpa = ({
           <p className='mb-4'>{conversation?.description}</p>
         </section>
         <section
-          className='p-8 bg-gray-100 w-full xl:w-1/2 flex flex-col gap-8'
+          className='p-8 bg-gray-100 w-full xl:w-1/2 flex flex-col gap-4'
           aria-labelledby='active-comment-header'>
           <div className='flex justify-between items-center'>
             <h2

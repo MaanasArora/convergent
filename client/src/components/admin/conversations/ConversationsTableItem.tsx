@@ -17,9 +17,7 @@ export const ConversationsTableItem = ({
         <Input type='checkbox' className='h-5 w-5' />
       </td>
       <td className='p-5'>
-        <a href={viewLink}>
-          <strong>{conversation.name}</strong>
-        </a>
+        <strong>{conversation.name}</strong>
         <br />
         {conversation.description}
       </td>

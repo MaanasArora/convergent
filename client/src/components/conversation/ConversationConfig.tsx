@@ -78,7 +78,7 @@ export default function ConversationConfig({
 
   return (
     <div className="flex flex-col items-start h-full py-4 w-[95%] max-w-3xl mx-auto">
-      <div className="flex flex-row w-full gap-8 items-center mb-8">
+      <div className="flex flex-row w-full gap-4 items-center">
         {!editItem && (
           <a
             type="button"
