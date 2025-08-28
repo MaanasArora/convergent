@@ -189,9 +189,9 @@ function DateRangePicker({
       <summary className="border-1 border-gray-200 shadow-md px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 w-max cursor-pointer bg-white">
         {buttonName}
       </summary>
-      <form className="flex flex-col border-2 absolute bg-white p-4 rounded-b-xl rounded-tl-xl w-max right-0">
+      <form className="flex flex-col border-1 border-gray-200 absolute bg-white p-4 rounded-b-xl rounded-tl-xl w-max right-0 flex flex-col gap-4 items-center">
         <input
-          className="p-2 border-2 rounded-md"
+          className="p-2 border-1 border-gray-200 rounded-md"
           type="date"
           id="start"
           name="range-start"
@@ -200,9 +200,9 @@ function DateRangePicker({
           max={maxDate}
           onChange={onDateChange}
         />
-        To
+        <p>to</p>
         <input
-          className="p-2 border-2 rounded-md"
+          className="p-2 border-1 border-gray-200 rounded-md"
           type="date"
           id="end"
           name="range-end"
