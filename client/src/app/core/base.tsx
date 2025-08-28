@@ -9,7 +9,7 @@ const AppBar = ({ children }: { children: React.ReactNode }) => (
     id="app-bar"
     className="w-full p-3 pl-5 flex items-center justify-between border-b-gray-200 border-b-2"
   >
-    <div className="flex">
+    <div className="flex items-center">
       <Logo />
       <h1 className="ml-3 mr-16 text-xl font-bold">Convergent</h1>
     </div>
