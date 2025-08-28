@@ -80,7 +80,7 @@ export default function CommentConfig({
         >
           <button
             type="submit"
-            className={`p-2 bg-gray-500 text-white rounded-md w-full ${comment.trim() === "" ? "cursor-default" : "bg-secondary"}`}
+            className={`px-2 py-1 bg-gray-500 text-white rounded-md w-full ${comment.trim() === "" ? "cursor-default" : "bg-secondary"}`}
             disabled={comment.trim() === ""} 
           >
             Add Comment

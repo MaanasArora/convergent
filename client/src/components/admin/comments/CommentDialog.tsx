@@ -35,9 +35,9 @@ export function NewCommentDialog({
       <button
         type="button"
         onClick={() => handleEditClick(true)}
-        className="flex mb-4 bg-white border-1 border-gray-300 p-2 w-min whitespace-nowrap items-center justify-center gap-x-2 rounded-xl"
+        className="flex mb-4 bg-white border-1 border-gray-300 px-3 py-2 w-min whitespace-nowrap items-center justify-center gap-x-2 rounded-xl"
       >
-        <PlusIcon height={30} width={30} /> Add Comment
+        <PlusIcon height={24} width={24} /> Add Comment
       </button>
 
       <dialog
