@@ -102,7 +102,7 @@ export const ConversationsTable = ({
                   id="conversation-query"
                   name="conversation"
                   placeholder="Search for Conversations"
-                  className="bg-white border-2 rounded-md p-2 h-min"
+                  className="bg-white rounded-md p-2 h-min shadow-md border-1 border-gray-200"
                   onInput={onSearchQueryChange}
                 />
               </form>
@@ -186,7 +186,7 @@ function DateRangePicker({
 
   return (
     <details className="[&:open>summary]:rounded-br-none relative">
-      <summary className="border-2 px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 w-max cursor-pointer bg-white">
+      <summary className="border-1 border-gray-200 shadow-md px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 w-max cursor-pointer bg-white">
         {buttonName}
       </summary>
       <form className="flex flex-col border-2 absolute bg-white p-4 rounded-b-xl rounded-tl-xl w-max right-0">
