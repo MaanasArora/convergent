@@ -5,3 +5,4 @@ venv/
 *.pyd
 __pycache__/
 node_modules/
+server/test.db
