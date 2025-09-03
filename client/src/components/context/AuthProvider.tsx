@@ -11,11 +11,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const userStatus = useQuery<User, Error>({
     queryKey: ["user"],
     queryFn: () => getUserMe(),
-    retry: (failCount, error) => {
-      if (error?.message.includes("422") || error?.message.includes("401"))
-        return false;
-      return failCount < 3;
-    },
+    retry: false,
   });
 
   const login = async (username: string, password: string) => {

@@ -49,7 +49,7 @@ export default function ConversationDialog({
           {editIdItem && <DeleteConfig conversation={editIdItem} />}
           <button
             type="button"
-            className="border-2 px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 ml-auto"
+            className="border-1 border-gray-300 px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 ml-auto"
             onClick={() => handleEditClick(false)}
           >
             Close
@@ -113,11 +113,11 @@ function DeleteConfig({ conversation }: { conversation: Conversation }) {
       </button>
       <dialog
         id="delete-conversation-dialog"
-        className="m-[revert] p-[revert] border-2 backdrop:bg-primary backdrop:opacity-80 rounded-xl"
+        className="m-[revert] p-[revert] backdrop:bg-primary backdrop:opacity-80 rounded-xl"
       >
         <button
           type="button"
-          className="border-2 px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 ml-auto"
+          className="border-1 border-gray-300 px-2 py-2 rounded-xl flex flex-row items-center gap-x-2 ml-auto"
           onClick={() => handleEditClick(false)}
         >
           Close

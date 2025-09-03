@@ -19,7 +19,7 @@ dependencies = [
     "scikit-learn (>=1.7.0,<2.0.0)",
     "passlib (>=1.7.4,<2.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
-    "convergent-engine @ ../engine",
+    "convergent-engine @ engine-dist/convergent_engine-0.1.0-py3-none-any.whl"
 ]
 
 
