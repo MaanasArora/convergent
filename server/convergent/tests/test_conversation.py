@@ -1040,12 +1040,12 @@ class TestVoteOnComment:
         assert response.status_code == 422  # should we get this to be 401 instead?
     
 
-    def test_vote_on_comment_with_invalid_token(self, client, create_conversation, create_comment):
-        conversation_id = create_conversation().json()["id"]
-        comment_id = create_comment(client, conversation_id).json()["id"]
+    def test_vote_on_comment_with_invalid_token(self, authenticated_client, create_conversation, create_comment):
+        conversation_id = create_conversation(authenticated_client).json()["id"]
+        comment_id = create_comment(authenticated_client, conversation_id).json()["id"]
 
-        client.cookies.set("access_token", "invalid_token")
-        response = client.post(
+        authenticated_client.cookies.set("access_token", "invalid_token")
+        response = authenticated_client.post(
             f"/comments/{comment_id}/vote",
             json={"value": 1}
         )
