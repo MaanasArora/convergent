@@ -12,22 +12,22 @@ import { ParticipationSpa } from "../../components/participation/ParticipationSp
 import type { Conversation, ParticipationComment } from "./dashboard";
 
 const ConversationPage = () => {
-  const params = useParams<{ conversationId: string }>();
-
+  const params = useParams<{ conversationId: string;}>();
+  const conversationIdOrName = params.conversationId;
   // This controls max. time (in s) the user need to wait before they can see the new comment(s)
   // TODO: make it configurable (server level? conversation level?)
   const autoRefetchInterval = 15;
 
   const friendlyId = useQuery({
-    queryKey: ["conversation-id", params.conversationId || ""],
-    queryFn: () => getConversationIdByFriendlyName(params.conversationId || ""),
+    queryKey: ["conversation-id-name", conversationIdOrName || ""],
+    queryFn: () => getConversationIdByFriendlyName(conversationIdOrName || ""),
     retry: false,
-    enabled: !!params.conversationId,
+    enabled: !!conversationIdOrName,
   });
 
   const conversationId = useMemo(() => {
-    return friendlyId.data || params.conversationId;
-  }, [friendlyId.data, params.conversationId]);
+    return friendlyId.data || conversationIdOrName;
+  }, [friendlyId.data, conversationIdOrName]);
 
   const conversation = useQuery<Conversation>({
     queryKey: ["current-conversation", conversationId],

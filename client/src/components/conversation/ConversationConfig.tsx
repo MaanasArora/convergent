@@ -39,6 +39,10 @@ export default function ConversationConfig({
   ); // TODO: placeholder; change to correct value later
   // const [updated, setUpdated] = useState(0);
 
+  const [conversationFriendlyLink, setConversationFriendlyLink] = useState(
+    editItem?.user_friendly_link ?? "",
+  );
+
   async function formSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
@@ -46,6 +50,7 @@ export default function ConversationConfig({
       display_unmoderated: formData.get("display-unmoderated") === "on",
       show_charts: formData.get("show-charts") === "on", // TODO: placeholder; change to correct value later
       allow_votes: formData.get("allow-votes") === "on", // TODO: placeholder; change to correct value later
+      user_friendly_link: formData.get("user-friendly-link"), // TODO: placeholder; change to correct value later
       name: formData.get("name"),
       description: formData.get("description"),
     };
@@ -175,6 +180,18 @@ export default function ConversationConfig({
               }
             ></Input>
             Make Conversation Open
+          </label>
+          <label htmlFor="user-friendly-link" className="flex gap-2 p-2">
+            Use Custom Link for Conversation
+            <Input
+              className="border-gray-500 border-2 justify-self-start aspect-square h-6"
+              name="user-friendly-link"
+              id="user-friendly-link"
+              value={conversationFriendlyLink}
+              onChange={(event) =>
+                setConversationFriendlyLink(event.target.value)
+              }
+            ></Input>
           </label>
         </fieldset>
 
