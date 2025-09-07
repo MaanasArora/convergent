@@ -71,7 +71,13 @@ async def login(
 
     access_token = create_access_token({"sub": user.username}, settings)
 
-    response.set_cookie(key="access_token", value=access_token, httponly=True)
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 

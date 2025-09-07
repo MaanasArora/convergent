@@ -49,15 +49,15 @@ export default function CommentConfig({
     }
   }
   return (
-    <form onSubmit={formSubmit}>
-      <h2 className="text-3xl font-bold my-4">Add comment to conversation</h2>
+    <form onSubmit={formSubmit} className="flex flex-col gap-4 p-4">
+      <h2 className="text-3xl font-bold">Add comment to conversation</h2>
       <p>Add help hints here for creating a comment </p>
-      <hgroup>
-        <h3 className="text-2xl font-bold my-4">{conversation.name}</h3>
+      <hgroup className="flex flex-col gap-4">
+        <h3 className="text-2xl font-bold">{conversation.name}</h3>
         <p>{conversation.description}</p>
       </hgroup>
       <textarea
-        className="border-gray-500 border-2 w-full rounded-md p-2 min-h-40"
+        className="border-gray-300 border-2 w-full rounded-md p-2 min-h-40"
         name="description"
         id="description"
         title="description"
@@ -68,7 +68,7 @@ export default function CommentConfig({
       <div className="flex gap-2 my-4 flex-wrap">
         <button
           type="button"
-          className="p-2 border-2 rounded-md hover:bg-red-800 hover:border-red-800 hover:text-white flex-1"
+          className="p-2 border-1 border-gray-400 rounded-md hover:bg-red-800 hover:border-red-800 hover:text-white flex-1"
           onClick={onFormCancel}
         >
           Cancel
@@ -80,7 +80,7 @@ export default function CommentConfig({
         >
           <button
             type="submit"
-            className={`p-2 bg-gray-500 text-white rounded-md w-full ${comment.trim() === "" ? "cursor-default" : "bg-secondary"}`}
+            className={`px-2 py-1 bg-gray-500 text-white rounded-md w-full ${comment.trim() === "" ? "cursor-default" : "bg-secondary"}`}
             disabled={comment.trim() === ""} 
           >
             Add Comment

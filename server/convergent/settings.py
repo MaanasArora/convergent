@@ -5,10 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str = "sqlite:///convergent.db"
-
     client_origin: str = "http://localhost:5173"
-    allowed_origins: list[str] = [client_origin]
-
     secret_key: str
     algorithm: str = "HS256"
     expires_delta_seconds: int = 3600
