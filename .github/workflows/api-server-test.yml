@@ -40,4 +40,5 @@ jobs:
       - name: Run tests
         run: |
           cd server
+          cp test.env .env
           poetry run pytest --maxfail=1 --disable-warnings -q
