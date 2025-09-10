@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from convergent import models
@@ -50,6 +52,15 @@ class ConversationAnalysisResponse(BaseModel):
     groups: list[GroupAnalysisResponse] | None = None
 
 
+@dataclass
+class ConversationAnalysisRawData:
+    conversation_id: UUID
+    comment_ids: list[UUID]
+    user_ids: list[UUID]
+    vote_matrix: np.ndarray
+    cluster_labels: np.ndarray | None = None
+
+
 def get_comment_vote_probabilities(votes: np.ndarray):
     total_votes = np.sum(~np.isnan(votes))
     if total_votes == 0:
@@ -73,110 +84,145 @@ def calculate_participation_rate(votes: np.ndarray):
     return total_votes / votes.size
 
 
-def get_conversation_groups(
-    db: Database, conversation_id: UUID
-) -> list[GroupAnalysisResponse]:
-    group_ids = (
-        db.query(models.UserCluster.cluster)
-        .filter(models.UserCluster.conversation_id == conversation_id)
-        .distinct()
-        .all()
+def get_cluster_labels(
+    db: Database, conversation: models.Conversation, user_ids: list[UUID]
+):
+    user_clusters = conversation.clusters
+
+    if user_clusters is None:
+        return None
+
+    cluster_map = {cluster.cluster: cluster.user for cluster in user_clusters}
+    return np.array([cluster_map.get(user_id, -1) for user_id in user_ids])
+
+
+def get_conversation_analysis_raw_data(
+    db: Database, conversation: models.Conversation
+) -> ConversationAnalysisRawData:
+    vote_matrix, user_idx, comment_idx = get_vote_matrix(conversation)
+
+    users = sorted(user_idx, key=lambda uid: user_idx[uid])
+    comments = sorted(comment_idx.keys(), key=lambda cid: comment_idx[cid])
+
+    user_ids = [user.id for user in users]
+    comment_ids = [comment.id for comment in comments]
+
+    cluster_labels = get_cluster_labels(db, conversation, user_ids)
+
+    return ConversationAnalysisRawData(
+        conversation_id=conversation.id,
+        comment_ids=comment_ids,
+        user_ids=user_ids,
+        vote_matrix=vote_matrix,
+        cluster_labels=cluster_labels,
     )
-    group_ids = [gid[0] for gid in group_ids]
-
-    groups = []
-    for group_id in group_ids:
-        users = (
-            db.query(models.UserCluster.user_id)
-            .filter(
-                models.UserCluster.conversation_id == conversation_id,
-                models.UserCluster.cluster == group_id,
-            )
-            .all()
-        )
-        user_ids = [u[0] for u in users]
-        groups.append(GroupAnalysisResponse(group_id=group_id, users=user_ids))
-
-    return groups
 
 
-def get_comment_representativeness(
-    votes: np.ndarray, cluster_labels: np.ndarray
-) -> list[CommentRepresentativeness]:
-    representativeness = []
-    unique_clusters = np.unique(cluster_labels)
-    for cluster_id in unique_clusters:
-        rep = get_group_comment_representativeness(votes, cluster_labels, cluster_id)
-        representativeness.append(
-            CommentRepresentativeness(group_id=int(cluster_id), representativeness=rep)
-        )
-    return representativeness
+def get_conversation_groups(db: Database, raw_data: ConversationAnalysisRawData):
+    if raw_data.cluster_labels is None:
+        return []
+
+    groups = {}
+    for user_id, cluster_id in zip(raw_data.user_ids, raw_data.cluster_labels):
+        if cluster_id == -1:
+            continue
+        if cluster_id not in groups:
+            groups[cluster_id] = []
+        groups[cluster_id].append(user_id)
+
+    return [
+        GroupAnalysisResponse(group_id=cluster_id, users=user_ids)
+        for cluster_id, user_ids in groups.items()
+    ]
 
 
 def get_comment_analysis(
     db: Database,
-    conversation_id: UUID,
     comment: models.Comment,
-    cluster_labels: np.ndarray | None,
-) -> CommentAnalysisResponse:
-    conversation = db.get(models.Conversation, conversation_id)
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    raw_data: ConversationAnalysisRawData,
+):
+    if comment.id not in raw_data.comment_ids:
+        raise ValueError("Comment ID not found in raw data")
 
-    votes, user_ids, comment_ids = get_vote_matrix(conversation)
-    if comment.id not in comment_ids:
-        raise HTTPException(status_code=404, detail="Comment not found in conversation")
+    comment_idx = raw_data.comment_ids.index(comment.id)
+    votes = raw_data.vote_matrix[:, comment_idx]
 
-    comment_index = [i for i, cid in enumerate(comment_ids) if cid == comment.id][0]
-    votes = votes[:, comment_index]
-
-    if cluster_labels is None:
-        consensus = None
-        representativeness = []
-    else:
-        consensus = get_comment_consensus(votes, cluster_labels)
-        representativeness = get_comment_representativeness(votes, cluster_labels)
+    consensus = get_comment_consensus(votes, raw_data.cluster_labels)
+    if np.isnan(consensus):
+        consensus = 0.0
+    if consensus is None:
+        consensus = 0.0
     participation_rate = calculate_participation_rate(votes)
     vote_probabilities = get_comment_vote_probabilities(votes)
-    consensus = float(consensus) if consensus is not None else 0.0
-    total_votes = int(np.sum(~np.isnan(votes)))
+
+    representativeness = []
+    if raw_data.cluster_labels is not None:
+        unique_clusters = set(raw_data.cluster_labels)
+        for cluster_id in unique_clusters:
+            if cluster_id == -1:
+                continue
+            cluster_votes = votes[raw_data.cluster_labels == cluster_id]
+            rep = get_group_comment_representativeness(cluster_votes, votes, cluster_id)
+            representativeness.append(
+                CommentRepresentativeness(
+                    group_id=int(cluster_id), representativeness=rep
+                )
+            )
 
     return CommentAnalysisResponse(
         comment_id=comment.id,
         content=comment.content,
-        total_votes=total_votes,
-        consensus=consensus,
+        total_votes=int(np.sum(~np.isnan(votes))),
+        consensus=float(consensus),
         participation_rate=participation_rate,
         vote_probabilities=vote_probabilities,
         representativeness=representativeness,
     )
 
 
+def get_conversation_comments(
+    db: Database,
+    conversation: models.Conversation,
+    raw_data: ConversationAnalysisRawData,
+):
+    comments = conversation.comments
+    comment_map = {comment.id: comment for comment in comments}
+
+    comment_analyses = []
+    for idx, comment_id in enumerate(raw_data.comment_ids):
+        comment = comment_map.get(comment_id)
+        if comment is None:
+            continue
+
+        comment_analysis = get_comment_analysis(db, comment, raw_data)
+        comment_analyses.append(comment_analysis)
+
+    return comment_analyses
+
+
 @router.get(
     "/conversation/{conversation_id}", response_model=ConversationAnalysisResponse
 )
-def analyze_conversation(db: Database, conversation_id: UUID):
+def analyze_conversation(
+    conversation_id: UUID, current_user: CurrentUser, db: Database
+):
     conversation = db.get(models.Conversation, conversation_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    comments = (
-        db.query(models.Comment)
-        .filter(models.Comment.conversation_id == conversation_id)
-        .all()
-    )
+    if conversation.author_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to access this conversation"
+        )
 
-    comment_analyses = [
-        get_comment_analysis(db, conversation_id, comment, cluster_labels)
-        for comment in comments
-    ]
-
-    groups = get_conversation_groups(db, conversation_id)
+    raw_data = get_conversation_analysis_raw_data(db, conversation)
+    groups = get_conversation_groups(db, raw_data)
+    comments = get_conversation_comments(db, conversation, raw_data)
 
     return ConversationAnalysisResponse(
-        conversation_id=conversation_id,
-        comment_ids=[comment.id for comment in comments],
-        user_ids=list({c.user_id for c in comments}),
-        comments=comment_analyses,
+        conversation_id=conversation.id,
+        comment_ids=raw_data.comment_ids,
+        user_ids=raw_data.user_ids,
+        comments=comments,
         groups=groups,
     )
