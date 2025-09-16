@@ -11,7 +11,7 @@ export type Conversation = {
   date_created: string;
   is_active: boolean;
   display_unmoderated: boolean;
-  user_friendly_link: string;
+  user_friendly_link?: string;
   show_charts?: boolean; // placeholder
   allow_votes?: boolean; // placeholder
 };

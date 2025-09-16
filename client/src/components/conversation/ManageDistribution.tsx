@@ -1,4 +1,4 @@
-import type { Conversation, ModerationComment } from "../../app/core/dashboard";
+import type { Conversation } from "../../app/core/dashboard";
 import { useOutletContext } from "react-router";
 
 export default function ManageDistribution({
