@@ -1,0 +1,44 @@
+name: "API server test"
+
+on:
+  pull_request:
+    branches: ["ma*"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      # Set up poetry
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: "2.1.3"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          cd server
+          poetry config virtualenvs.create true --local
+          poetry install --no-interaction --no-ansi
+          poetry run pip install pytest
+
+      # Run tests
+      - name: Run tests
+        run: |
+          cd server
+          cp test.env .env
+          poetry run pytest --maxfail=1 --disable-warnings -q
