@@ -251,13 +251,13 @@ test-no-images = ["pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist"
 
 [[package]]
 name = "convergent-engine"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 optional = false
 python-versions = ">=3.12"
 groups = ["main"]
 files = [
-    {file = "convergent_engine-0.1.0-py3-none-any.whl", hash = "sha256:a0b4a5ed9f7271e68614503ecd68060b9527ec115a303b0abefcd19a22dfad3e"},
+    {file = "convergent_engine-0.1.1-py3-none-any.whl", hash = "sha256:1e149efbdcf1418fcdce245f962238dc3cef37e36dc950152b20f07695e9e717"},
 ]
 
 [package.dependencies]
@@ -268,7 +268,7 @@ scikit-learn = ">=1.7.0,<2.0.0"
 
 [package.source]
 type = "file"
-url = "engine-dist/convergent_engine-0.1.0-py3-none-any.whl"
+url = "engine-dist/convergent_engine-0.1.1-py3-none-any.whl"
 
 [[package]]
 name = "cycler"
@@ -1811,4 +1811,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.6.3)
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "85036c9c74875e30802d2ed527794861ae86364e30324c1bbff243ea84f3bdf6"
+content-hash = "0633d5ed6978789f5154c6e2c01cc68f89a7c06d5eb6b447603ba570fa226ea2"
