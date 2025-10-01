@@ -11,7 +11,7 @@ ENV PATH="${PATH}:/root/.local/bin"
 WORKDIR /app
 COPY . /app
 
-RUN pip install engine-dist/convergent_engine-0.1.0-py3-none-any.whl
+RUN pip install engine-dist/convergent_engine-0.1.1-py3-none-any.whl
 
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
