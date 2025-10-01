@@ -29,7 +29,7 @@ export default function ManageConversation({
   };
   return (
     <section className="w-[95%] max-w-4xl mx-auto">
-      <BreadCrumb conversation={editIdItem.id} />
+      <BreadCrumb conversation={editIdItem.name} />
       <div className="title flex justify-between">
         <h1 className="text-4xl font-bold my-4">
           Conversation: {editIdItem.name}

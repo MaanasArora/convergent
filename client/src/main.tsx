@@ -10,6 +10,7 @@ import ConversationPage from "./app/core/conversation";
 import DashboardPage from "./app/core/dashboard";
 import { AuthProvider } from "./components/context/AuthProvider";
 import ManageComments from "./components/conversation/ManageComments";
+import ManageDistribution from "./components/conversation/ManageDistribution";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +46,7 @@ const router = createBrowserRouter([
                   },
                   {
                     path: "distribute",
-                    Component: () => <></>,
+                    Component: ManageDistribution,
                   },
                   {
                     path: "moderate",
