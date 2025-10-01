@@ -6,7 +6,6 @@ from sqlalchemy import false, true
 import urllib
 from convergent import models
 from convergent.auth.user import CurrentUser
-from convergent.core.routines import update_conversation_analysis
 from convergent.database import Database
 from pydantic import BaseModel
 
@@ -287,8 +286,6 @@ async def vote_on_comment(
         db_vote = models.Vote(**vote.model_dump(), comment=comment, user=current_user)
         db.add(db_vote)
     db.commit()
-
-    update_conversation_analysis(comment.conversation, db)
 
     return {"id": db_vote.id}
 

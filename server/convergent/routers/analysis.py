@@ -200,6 +200,23 @@ def get_conversation_comments(
     return comment_analyses
 
 
+@router.put("/conversation/{conversation_id}/refresh", status_code=204)
+def refresh_conversation_analysis(
+    conversation_id: UUID, current_user: CurrentUser, db: Database
+):
+    conversation = db.get(models.Conversation, conversation_id)
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if conversation.author_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to refresh this conversation"
+        )
+
+    update_conversation_analysis(conversation, db)
+    return {"status": "completed"}
+
+
 @router.get(
     "/conversation/{conversation_id}", response_model=ConversationAnalysisResponse
 )

@@ -45,6 +45,12 @@ class TestConversationAnalysis:
             for comment_id in comment_ids:
                 client.post(f"/comments/{comment_id}/vote", json={"value": -1})
 
+        # Refresh conversation analysis
+        response = conversation_owner_client.put(
+            f"/analysis/conversation/{conversation_id}/refresh"
+        )
+        assert response.status_code == 204
+
         # Fetch conversation analysis
         response = conversation_owner_client.get(
             f"/analysis/conversation/{conversation_id}"
@@ -52,10 +58,8 @@ class TestConversationAnalysis:
         assert response.status_code == 200
 
         analysis = response.json()
-        print(analysis)
         assert analysis["conversation_id"] == conversation_id
         assert len(analysis["groups"]) == 2  # Expecting 2 distinct groups
         for group in analysis["groups"]:
-            print(group)
             assert len(group["users"]) == num_users // 2
         assert len(analysis["comments"]) == len(comment_ids)
