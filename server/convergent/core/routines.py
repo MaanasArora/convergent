@@ -29,8 +29,12 @@ def update_conversation_analysis(conversation: models.Conversation, db: Session)
         return
 
     pca = decompose_votes(vote_matrix)
-    cluster = cluster_users(pca)
-
+    if len(np.unique(vote_matrix)) <= 1:
+        # Not enough diversity in votes to form clusters
+        cluster = None
+    else:
+        cluster = cluster_users(pca)
+    
     index_to_user = {i: user for user, i in user_index.items()}
 
     for i, pca_values in enumerate(pca):

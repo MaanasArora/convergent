@@ -11,7 +11,7 @@ from convergent_engine.math import (
     get_comment_consensus,
     get_group_comment_representativeness,
 )
-from convergent.core.routines import get_vote_matrix
+from convergent.core.routines import get_vote_matrix, update_conversation_analysis
 
 
 router = APIRouter(prefix="/analysis")
@@ -88,11 +88,10 @@ def get_cluster_labels(
     db: Database, conversation: models.Conversation, user_ids: list[UUID]
 ):
     user_clusters = conversation.clusters
-
     if user_clusters is None:
         return None
 
-    cluster_map = {cluster.cluster: cluster.user for cluster in user_clusters}
+    cluster_map = {cluster.user.id: cluster.cluster for cluster in user_clusters}
     return np.array([cluster_map.get(user_id, -1) for user_id in user_ids])
 
 
@@ -161,8 +160,9 @@ def get_comment_analysis(
         for cluster_id in unique_clusters:
             if cluster_id == -1:
                 continue
-            cluster_votes = votes[raw_data.cluster_labels == cluster_id]
-            rep = get_group_comment_representativeness(cluster_votes, votes, cluster_id)
+            rep = get_group_comment_representativeness(
+                votes, raw_data.cluster_labels, cluster_id
+            )
             representativeness.append(
                 CommentRepresentativeness(
                     group_id=int(cluster_id), representativeness=rep
