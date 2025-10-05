@@ -38,9 +38,18 @@ class CommentAnalysisResponse(BaseModel):
     representativeness: list[CommentRepresentativeness]
 
 
+class GroupCommentRepresentativeness(BaseModel):
+    group_id: int
+    comment_id: UUID
+    content: str
+    agree_percentage: float | None = None
+    representativeness: float | None = None
+
+
 class GroupAnalysisResponse(BaseModel):
     group_id: int
     users: list[UUID]
+    representative_comments: list[GroupCommentRepresentativeness] | None = None
 
 
 class ConversationAnalysisResponse(BaseModel):
@@ -59,6 +68,7 @@ class ConversationAnalysisRawData:
     user_ids: list[UUID]
     vote_matrix: np.ndarray
     cluster_labels: np.ndarray | None = None
+    comments_processed: list[CommentAnalysisResponse] | None = None
 
 
 def get_comment_vote_probabilities(votes: np.ndarray):
@@ -126,12 +136,59 @@ def get_conversation_groups(db: Database, raw_data: ConversationAnalysisRawData)
         if cluster_id == -1:
             continue
         if cluster_id not in groups:
-            groups[cluster_id] = []
-        groups[cluster_id].append(user_id)
+            groups[cluster_id] = {}
+            groups[cluster_id]["users"] = []
+            groups[cluster_id]["representative_comments"] = []
+        groups[cluster_id]["users"].append(user_id)
+
+    for cluster_id in groups:
+        group_representative_comments = []
+        for comment_analysis in raw_data.comments_processed or []:
+            rep = next(
+                (
+                    r.representativeness
+                    for r in comment_analysis.representativeness
+                    if r.group_id == cluster_id
+                ),
+                None,
+            )
+            if rep is None:
+                continue
+
+            user_id_to_index = {uid: idx for idx, uid in enumerate(raw_data.user_ids)}
+            comment_idx = raw_data.comment_ids.index(comment_analysis.comment_id)
+            group_user_indices = [
+                user_id_to_index[uid] for uid in groups[cluster_id]["users"]
+            ]
+            group_votes = raw_data.vote_matrix[group_user_indices, comment_idx]
+            group_agree = np.sum(group_votes == 1) / len(group_user_indices)
+
+            group_representative_comments.append(
+                GroupCommentRepresentativeness(
+                    group_id=cluster_id,
+                    comment_id=comment_analysis.comment_id,
+                    content=comment_analysis.content,
+                    representativeness=rep,
+                    agree_percentage=group_agree,
+                )
+            )
+
+        group_representative_comments.sort(
+            key=lambda x: (x.representativeness is not None, x.representativeness),
+            reverse=True,
+        )
+        groups[cluster_id]["representative_comments"] = group_representative_comments[
+            :3
+        ]
 
     return [
-        GroupAnalysisResponse(group_id=cluster_id, users=user_ids)
-        for cluster_id, user_ids in groups.items()
+        GroupAnalysisResponse.model_validate(
+            {
+                "group_id": cluster_id,
+                **groups[cluster_id],
+            }
+        )
+        for cluster_id in groups
     ]
 
 
@@ -184,7 +241,7 @@ def get_conversation_comments(
     db: Database,
     conversation: models.Conversation,
     raw_data: ConversationAnalysisRawData,
-):
+) -> list[CommentAnalysisResponse]:
     comments = conversation.comments
     comment_map = {comment.id: comment for comment in comments}
 
@@ -233,8 +290,11 @@ def analyze_conversation(
         )
 
     raw_data = get_conversation_analysis_raw_data(db, conversation)
-    groups = get_conversation_groups(db, raw_data)
+
     comments = get_conversation_comments(db, conversation, raw_data)
+    raw_data.comments_processed = comments
+
+    groups = get_conversation_groups(db, raw_data)
 
     return ConversationAnalysisResponse(
         conversation_id=conversation.id,

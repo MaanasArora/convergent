@@ -49,6 +49,47 @@ export default function ConversationAnalysisPage() {
             {conversationAnalysis.data?.comment_ids.length || 0}
           </p>
         </div>
+        <div className='mb-8'>
+          <h2 className='text-xl font-semibold mb-2'>Groups</h2>
+          <p className='mb-4'>
+            From the participants in this conversation,{' '}
+            <strong>{conversationAnalysis.data?.groups.length}</strong> groups
+            emerged based on their response patterns.
+          </p>
+          <table className='min-w-full border border-gray-300'>
+            <thead>
+              <tr className='bg-gray-200'>
+                <th className='border border-gray-300 px-4 py-2 text-left'>
+                  Group ID
+                </th>
+                <th className='border border-gray-300 px-4 py-2 text-left'>
+                  Number of Members
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {conversationAnalysis.data?.groups.map((group) => (
+                <tr key={group.group_id}>
+                  <td className='border border-gray-300 px-4 py-2'>
+                    Group {group.group_id}
+                  </td>
+                  <td className='border border-gray-300 px-4 py-2'>
+                    {group.users.length}
+                  </td>
+                </tr>
+              ))}
+              {conversationAnalysis.data?.groups.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className='border border-gray-300 px-4 py-2 text-center'>
+                    No groups identified.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
         <div>
           <h2 className='text-xl font-semibold mb-2'>Consensus</h2>
           <p className='mb-4'>
@@ -59,13 +100,13 @@ export default function ConversationAnalysisPage() {
           <table className='min-w-full border border-gray-300'>
             <thead>
               <tr className='bg-gray-200'>
-                <th className='border border-gray-300 px-4 py-2 text-left'>
+                <th className='border border-gray-300 px-4 py-2 text-left w-1/12'>
                   Rank
                 </th>
-                <th className='border border-gray-300 px-4 py-2 text-left'>
+                <th className='border border-gray-300 px-4 py-2 text-left w-1/2'>
                   Comment
                 </th>
-                <th className='border border-gray-300 px-4 py-2 text-left'>
+                <th className='border border-gray-300 px-4 py-2 text-left w-5/12'>
                   Consensus Score
                 </th>
               </tr>
@@ -109,6 +150,71 @@ export default function ConversationAnalysisPage() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className='mt-8'>
+          <h2 className='text-xl font-semibold mb-2'>Representation</h2>
+          <p className='mb-4'>
+            In each of the identified groups, the following comments best
+            represent the views of that group.
+          </p>
+          {conversationAnalysis.data?.groups.map((group) => (
+            <div key={group.group_id} className='mb-6'>
+              <h3 className='text-lg font-semibold mb-2'>
+                Group {group.group_id} (Members: {group.users.length})
+              </h3>
+              {group.representative_comments.length === 0 && (
+                <p>No representative comments for this group.</p>
+              )}
+              {group.representative_comments.length > 0 && (
+                <table className='min-w-full border border-gray-300'>
+                  <thead>
+                    <tr className='bg-gray-200'>
+                      <th className='border border-gray-300 px-4 py-2 text-left w-1/2'>
+                        Comment
+                      </th>
+                      <th className='border border-gray-300 px-4 py-2 text-left w-1/4'>
+                        Percentage of Group Agreeing
+                      </th>
+                      <th className='border border-gray-300 px-4 py-2 text-left w-1/4'>
+                        Representation Score
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.representative_comments.map((comment) => (
+                      <tr key={comment.id}>
+                        <td className='border border-gray-300 px-4 py-2'>
+                          {comment.content}
+                        </td>
+                        <td className='border border-gray-300 px-4 py-2'>
+                          {`${(comment.agree_percentage * 100).toFixed(0)}%`}
+                        </td>
+                        <td className='border border-gray-300 px-4 py-2'>
+                          <div className='flex items-center'>
+                            <div className='relative w-32 h-4 bg-gray-200 rounded'>
+                              <div
+                                className={
+                                  'absolute top-0 left-0 h-full rounded bg-blue-500'
+                                }
+                                style={{
+                                  width: `${
+                                    (comment.representativeness * 100) / 5
+                                  }%`,
+                                }}
+                              />
+                            </div>
+                            <span className='ml-2 text-sm'>
+                              {` (${comment.representativeness.toFixed(2)})`}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          ))}
         </div>
       </section>
     </CoreBase>
