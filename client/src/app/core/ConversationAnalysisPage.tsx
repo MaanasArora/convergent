@@ -2,6 +2,7 @@ import { useParams } from 'react-router';
 import CoreBase from './base';
 import { useQuery } from '@tanstack/react-query';
 import { getApi } from '../../components/api/base';
+import dayjs from 'dayjs';
 
 export default function ConversationAnalysisPage() {
   const params = useParams();
@@ -23,9 +24,92 @@ export default function ConversationAnalysisPage() {
   return (
     <CoreBase requiresLogin={true}>
       <section className='xl:w-[90%] w-full mx-auto p-5'>
-        <h1 className='text-3xl font-bold mb-4'>
-          Analysis: {conversation.data?.name}
-        </h1>
+        <h1 className='text-3xl font-bold mb-2'>{conversation.data?.name}</h1>
+        <h2 className='text-xl font-semibold mb-8'>Conversation Analysis</h2>
+        <div className='mb-4'>
+          <h2 className='text-xl font-semibold mb-2'>Summary</h2>
+          <p>
+            <strong>Description:</strong> {conversation.data?.description}
+          </p>
+          <p>
+            <strong>Created By:</strong> {conversation.data?.author.username}
+          </p>
+          <p>
+            <strong>Created At:</strong>{' '}
+            {dayjs(conversation.data?.date_created).format(
+              'MMMM D, YYYY h:mm A'
+            )}
+          </p>
+          <p>
+            <strong>Total Participants:</strong>{' '}
+            {conversationAnalysis.data?.user_ids.length || 0}
+          </p>
+          <p>
+            <strong>Total Comments:</strong>{' '}
+            {conversationAnalysis.data?.comment_ids.length || 0}
+          </p>
+        </div>
+        <div>
+          <h2 className='text-xl font-semibold mb-2'>Consensus</h2>
+          <p className='mb-4'>
+            Below are the comments in the conversation ranked by their consensus
+            scores. Higher scores indicate greater agreement across groups,
+            while lower scores suggest the comment is more divisive.
+          </p>
+          <table className='min-w-full border border-gray-300'>
+            <thead>
+              <tr className='bg-gray-200'>
+                <th className='border border-gray-300 px-4 py-2 text-left'>
+                  Rank
+                </th>
+                <th className='border border-gray-300 px-4 py-2 text-left'>
+                  Comment
+                </th>
+                <th className='border border-gray-300 px-4 py-2 text-left'>
+                  Consensus Score
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {conversationAnalysis.data?.comments
+                .sort((a, b) => b.consensus - a.consensus)
+                .map((comment, index) => (
+                  <tr key={comment.id}>
+                    <td className='border border-gray-300 px-4 py-2'>
+                      {index + 1}
+                    </td>
+                    <td className='border border-gray-300 px-4 py-2'>
+                      {comment.content}
+                    </td>
+                    <td className='border border-gray-300 px-4 py-2'>
+                      <div className='flex items-center'>
+                        <div className='relative w-64 h-4 bg-gray-200 rounded'>
+                          <div
+                            className={
+                              'absolute top-0 left-0 h-full rounded bg-green-500'
+                            }
+                            style={{ width: `${comment.consensus * 100}%` }}
+                          />
+                        </div>
+                        <span className='ml-2 text-sm'>
+                          {` (${comment.consensus.toFixed(2)})`}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              {conversationAnalysis.data?.comments.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className='border border-gray-300 px-4 py-2 text-center'>
+                    No comments available for analysis.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </CoreBase>
   );
