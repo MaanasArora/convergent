@@ -278,7 +278,7 @@ def refresh_conversation_analysis(
     "/conversation/{conversation_id}", response_model=ConversationAnalysisResponse
 )
 def analyze_conversation(
-    conversation_id: UUID, current_user: CurrentUser, db: Database
+    conversation_id: UUID, current_user: CurrentUser, db: Database, refresh: bool = True
 ):
     conversation = db.get(models.Conversation, conversation_id)
     if conversation is None:
@@ -288,6 +288,9 @@ def analyze_conversation(
         raise HTTPException(
             status_code=403, detail="Not authorized to access this conversation"
         )
+
+    if refresh:
+        update_conversation_analysis(conversation, db)
 
     raw_data = get_conversation_analysis_raw_data(db, conversation)
 
