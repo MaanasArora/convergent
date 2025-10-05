@@ -11,6 +11,7 @@ import DashboardPage from "./app/core/dashboard";
 import { AuthProvider } from "./components/context/AuthProvider";
 import ManageComments from "./components/conversation/ManageComments";
 import ManageDistribution from "./components/conversation/ManageDistribution";
+import ConversationAnalysisPage from "./app/core/ConversationAnalysisPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
                     children: [{ index: true, Component: ManageComments }],
                   },
                 ],
+              },
+              {
+                path: "analysis",
+                Component: ConversationAnalysisPage,
               },
             ],
           },
