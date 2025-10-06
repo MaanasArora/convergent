@@ -22,8 +22,8 @@ class TestConversationAnalysis:
         conversation_owner_client = clients["user1"]
 
         other_clients = [clients[f"user{i}"] for i in range(2, num_users + 2)]
-        pos_clients = other_clients[: users_per_group]
-        neg_clients = other_clients[users_per_group :]
+        pos_clients = other_clients[:users_per_group]
+        neg_clients = other_clients[users_per_group:]
 
         conversation = create_conversation(conversation_owner_client)
         conversation = conversation.json()
@@ -59,7 +59,11 @@ class TestConversationAnalysis:
 
         analysis = response.json()
         assert analysis["conversation_id"] == conversation_id
+        
         assert len(analysis["groups"]) == 2  # Expecting 2 distinct groups
         for group in analysis["groups"]:
             assert len(group["users"]) == num_users // 2
-        assert len(analysis["comments"]) == len(comment_ids)
+            assert "representative_comments" in group
+            
+        assert "comments_by_consensus" in analysis
+        assert len(analysis["comments_by_consensus"]) == len(comment_ids)
