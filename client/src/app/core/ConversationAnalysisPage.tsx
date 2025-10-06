@@ -22,7 +22,7 @@ interface GroupAnalysis {
 interface ConversationAnalysis {
   user_ids: string[];
   comment_ids: string[];
-  comments: CommentAnalysis[];
+  comments_by_consensus: CommentAnalysis[];
   groups: GroupAnalysis[];
 }
 
@@ -148,9 +148,8 @@ export default function ConversationAnalysisPage() {
               </tr>
             </thead>
             <tbody>
-              {conversationAnalysis.comments
-                .sort((a, b) => b.consensus - a.consensus)
-                .map((comment, index) => (
+              {conversationAnalysis.comments_by_consensus.map(
+                (comment, index) => (
                   <tr key={comment.id}>
                     <td className='border border-gray-300 px-4 py-2'>
                       {index + 1}
@@ -174,8 +173,9 @@ export default function ConversationAnalysisPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              {conversationAnalysis.comments.length === 0 && (
+                )
+              )}
+              {conversationAnalysis.comments_by_consensus.length === 0 && (
                 <tr>
                   <td
                     colSpan={2}
