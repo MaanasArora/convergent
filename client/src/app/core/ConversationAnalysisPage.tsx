@@ -61,7 +61,7 @@ export default function ConversationAnalysisPage() {
 
   return (
     <CoreBase requiresLogin={true}>
-      <section className="xl:w-[90%] w-full mx-auto p-5">
+      <section className="lg:w-[60%] w-full mx-auto p-5">
         <h1 className="text-3xl font-bold mb-4">{conversation.name}</h1>
         <h2 className="text-2xl font-bold mb-8">Conversation Analysis</h2>
         <div className="mb-4">
@@ -160,7 +160,7 @@ export default function ConversationAnalysisPage() {
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       <div className="flex items-center">
-                        <div className="relative w-48 h-4 bg-gray-200 rounded">
+                        <div className="relative w-32 h-4 bg-gray-200 rounded">
                           <div
                             className={
                               "absolute top-0 left-0 h-full rounded bg-green-500"
@@ -229,7 +229,7 @@ export default function ConversationAnalysisPage() {
                         </td>
                         <td className="border border-gray-300 px-4 py-2">
                           <div className="flex items-center">
-                            <div className="relative w-48 h-4 bg-gray-200 rounded">
+                            <div className="relative w-32 h-4 bg-gray-200 rounded">
                               <div
                                 className={
                                   "absolute top-0 left-0 h-full rounded bg-blue-500"
