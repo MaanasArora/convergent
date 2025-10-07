@@ -61,7 +61,7 @@ export default function ConversationAnalysisPage() {
 
   return (
     <CoreBase requiresLogin={true}>
-      <section className="lg:w-[60%] w-full mx-auto p-5">
+      <section className="lg:w-[70%] w-full mx-auto p-5">
         <h1 className="text-3xl font-bold mb-4">{conversation.name}</h1>
         <h2 className="text-2xl font-bold mb-8">Conversation Analysis</h2>
         <div className="mb-4">
