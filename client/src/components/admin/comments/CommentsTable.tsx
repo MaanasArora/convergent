@@ -34,6 +34,10 @@ export default function CommentsTable({
     }
   };
 
+  const handleExport = () => {
+
+  }
+
   const filteredComments = useMemo(() => {
     // if (filter.length === 0) return comments;
     const filteredModes = filter.map((item) =>
@@ -112,6 +116,17 @@ export default function CommentsTable({
             onComplete={onComplete}
           />
         )}
+      </div>
+      <div>
+        <label>
+            <button
+              type="button"
+              className="border-2 px-1 py-1"
+              onClick={handleExport}
+              >
+                Export CSV
+            </button>
+          </label>
       </div>
       {(filteredComments || []).map((item) => (
         <CommentsTableItem
