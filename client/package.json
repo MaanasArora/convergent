@@ -19,6 +19,7 @@
     "plotly.js": "^2.35.2",
     "plotly.js-dist": "^2.35.2",
     "react": "^18.3.1",
+    "react-csv": "^2.2.2",
     "react-dom": "^18.3.1",
     "react-plotly.js": "^2.6.0",
     "react-router": "^7.6.2",

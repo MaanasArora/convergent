@@ -6,6 +6,7 @@ import type {
 } from "../../../app/core/dashboard";
 import { NewCommentDialog } from "./CommentDialog";
 import { CommentsTableItem } from "./CommentsTableItem";
+import { CSVLink } from "react-csv";
 
 const mappedState = new Map([
   ["unmoderated", null],
@@ -23,6 +24,12 @@ export default function CommentsTable({
 }) {
   const [filter, setFilter] = useState<string[]>([]);
 
+  const transpose = comments.map(comment => [comment.user_id, comment.approved, comment.content]);
+  const dataCsv = [
+    ["UserID", "ModerationState", "Content"],
+    ...transpose,
+  ];
+
   const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const toggledValue = e.target.value;
     if (filter.includes(toggledValue)) {
@@ -33,10 +40,6 @@ export default function CommentsTable({
       setFilter(filter.concat([toggledValue]));
     }
   };
-
-  const handleExport = () => {
-
-  }
 
   const filteredComments = useMemo(() => {
     // if (filter.length === 0) return comments;
@@ -119,13 +122,14 @@ export default function CommentsTable({
       </div>
       <div>
         <label>
-            <button
-              type="button"
-              className="border-2 px-1 py-1"
-              onClick={handleExport}
+            <CSVLink
+              data={dataCsv}
+              filename={"conversation.csv"}
+              className="btn btn-primary"
+              target="_blank"
               >
                 Export CSV
-            </button>
+            </CSVLink>
           </label>
       </div>
       {(filteredComments || []).map((item) => (
