@@ -66,6 +66,7 @@ class ConversationUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     display_unmoderated: Optional[bool] = False
+    user_friendly_link: Optional[str] = None
 
 
 def get_conversation_details(

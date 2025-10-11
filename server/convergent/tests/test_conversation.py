@@ -375,7 +375,7 @@ class TestUpdateConversation:
         
         response = authenticated_client.put(
             f"/conversations/{conversation_id}",
-            json={"display_unmoderated": "false"},
+            json={"display_unmoderated": "false","user_friendly_link": "mylink"},
         ) 
         assert response.status_code == 200
         assert response.json() == {"id": conversation_id}
@@ -384,6 +384,7 @@ class TestUpdateConversation:
         get_response = authenticated_client.get(f"/conversations/{conversation_id}")
         assert get_response.status_code == 200
         assert get_response.json()["display_unmoderated"] is False
+        assert get_response.json()["user_friendly_link"] == "mylink"
     
 
     def test_cannot_update_anothers_conversation(self, create_conversation, authenticated_clients):
