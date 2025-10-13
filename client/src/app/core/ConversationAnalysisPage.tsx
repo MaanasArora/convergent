@@ -73,9 +73,6 @@ export default function ConversationAnalysisPage() {
     <CoreBase requiresLogin={true}>
       <style>{`
         @media print {
-          .no-print {
-            display: none !important;
-          }
           body, html {
             overflow: visible !important;
             height: auto !important;
