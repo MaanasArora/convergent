@@ -91,9 +91,9 @@ export default function ConversationAnalysisPage() {
           <p className='text-lg opacity-90 mb-8'>{conversation.description}</p>
           <div className='flex gap-10 text-sm opacity-85'>
             <div>
-              📅 {dayjs(conversation.date_created).format('MMMM D, YYYY')}
+              {dayjs(conversation.date_created).format('MMMM D, YYYY')}
             </div>
-            <div>👤 {conversation.author.username}</div>
+            <div>{conversation.author.username}</div>
           </div>
         </div>
 
