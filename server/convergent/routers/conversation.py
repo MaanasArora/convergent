@@ -66,6 +66,7 @@ class ConversationUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     display_unmoderated: Optional[bool] = False
+    user_friendly_link: Optional[str] = None
 
 
 def get_conversation_details(
@@ -169,22 +170,24 @@ async def read_comments(
     else:
         return comments
 
+def check_url_safety_and_uniqueness(conversation: ConversationCreate | ConversationUpdate, db: Database):
+    link = conversation.user_friendly_link.strip()
+    link = link.replace(" ", "-").lower()
+    conversation.user_friendly_link = urllib.parse.quote(link)
+
+    if db.query(models.Conversation).filter(
+        models.Conversation.user_friendly_link == conversation.user_friendly_link
+    ).first():
+        raise HTTPException(
+            status_code=409, detail="User friendly link already exists"
+        )
 
 @router.post("/conversations")
 async def create_conversation(
     conversation: ConversationCreate, db: Database, current_user: CurrentUser
 ):
     if conversation.user_friendly_link:
-        link = conversation.user_friendly_link.strip()
-        link = link.replace(" ", "-").lower()
-        conversation.user_friendly_link = urllib.parse.quote(link)
-
-        if db.query(models.Conversation).filter(
-            models.Conversation.user_friendly_link == conversation.user_friendly_link
-        ).first():
-            raise HTTPException(
-                status_code=409, detail="User friendly link already exists"
-            )
+        check_url_safety_and_uniqueness(conversation,db)
 
     db_conversation = models.Conversation(
         **conversation.model_dump(), author=current_user
@@ -207,6 +210,9 @@ async def update_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     if conversation_db.author != current_user:
         raise HTTPException(status_code=403, detail="Not authorized")
+    
+    if conversation.user_friendly_link:
+        check_url_safety_and_uniqueness(conversation,db)
 
     for key, value in conversation.model_dump(exclude_unset=True).items():
         setattr(conversation_db, key, value)

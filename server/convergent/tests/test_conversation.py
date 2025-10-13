@@ -375,7 +375,7 @@ class TestUpdateConversation:
         
         response = authenticated_client.put(
             f"/conversations/{conversation_id}",
-            json={"display_unmoderated": "false"},
+            json={"display_unmoderated": "false","user_friendly_link": "mylink"},
         ) 
         assert response.status_code == 200
         assert response.json() == {"id": conversation_id}
@@ -384,6 +384,7 @@ class TestUpdateConversation:
         get_response = authenticated_client.get(f"/conversations/{conversation_id}")
         assert get_response.status_code == 200
         assert get_response.json()["display_unmoderated"] is False
+        assert get_response.json()["user_friendly_link"] == "mylink"
     
 
     def test_cannot_update_anothers_conversation(self, create_conversation, authenticated_clients):
@@ -481,6 +482,56 @@ class TestUpdateConversation:
         )
         
         assert response.status_code == 200
+
+    def test_update_conversation_normalizes_link(self, db, authenticated_client, create_conversation):
+        """
+        Test link normalization when user provides an optional user-friendly link
+        Expected Behavior:
+        - The API returns a 200 status code
+        - The link stored in the database is a normalized version of the provided string
+        """
+        conversation_id = create_conversation(authenticated_client).json()["id"]
+
+        response =  authenticated_client.put(
+            f"/conversations/{conversation_id}",
+            json={"user_friendly_link":"  Test Convo Link  "}
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"id": conversation_id}
+        
+        # Verify the conversation is in the database with normalized link
+        conversation_id = UUID(response.json()["id"])
+        conversation_in_db = db.query(Conversation).filter_by(id=conversation_id).first()
+        assert conversation_in_db.user_friendly_link == "test-convo-link"
+
+
+    def test_cannot_update_conversation_with_existing_friendly_link(
+        self, 
+        authenticated_client, create_conversation
+    ):
+        """
+        Test handling of duplicate user-friendly link creation attempts from the same user
+        Expected Behavior:
+        - The API returns a 409 status code
+        - The response JSON contains an "detail" field with the description "User friendly link already exists"
+        """
+        friendly_link = "existing-link"
+
+        conversation_id = create_conversation(authenticated_client).json()["id"]
+
+        response1 =authenticated_client.put(
+            f"/conversations/{conversation_id}",
+            json={"user_friendly_link": friendly_link}
+        )
+        assert response1.status_code == 200
+
+        response2 =authenticated_client.put(
+            f"/conversations/{conversation_id}",
+            json={"user_friendly_link": friendly_link}
+        )
+        assert response2.status_code == 409
+        assert response2.json() == {"detail": "User friendly link already exists"}
 
 
 class TestDeleteConversation:
