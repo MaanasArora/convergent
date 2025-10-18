@@ -183,7 +183,15 @@ async def delete_imported_conversation(
             status_code=403, detail="Not authorized to delete this conversation"
         )
 
-    # delete comments, votes, and users associated with this conversation
+    # delete comments, votes, users, and analysis related to this conversation
+    db.query(models.UserPca).filter(
+        models.UserPca.conversation_id == conversation_id
+    ).delete(synchronize_session=False)
+
+    db.query(models.UserCluster).filter(
+        models.UserCluster.conversation_id == conversation_id
+    ).delete(synchronize_session=False)
+
     db.query(models.Vote).filter(
         models.Vote.comment_id.in_(
             db.query(models.Comment.id).filter(
