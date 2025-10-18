@@ -8,6 +8,7 @@ import urllib
 from convergent import models
 from convergent.auth.user import CurrentUser
 from convergent.database import Database
+from convergent.core.routines import update_conversation_analysis
 from pydantic import BaseModel
 
 
@@ -107,7 +108,12 @@ def process_votes_file(
 
 
 @router.post("/conversations/import")
-async def import_data(files: list[UploadFile], db: Database, current_user: CurrentUser):
+async def import_data(
+    files: list[UploadFile],
+    db: Database,
+    current_user: CurrentUser,
+    refresh_analysis: Optional[bool] = True,
+):
     summary_file = None
     comments_file = None
     votes_history_file = None
@@ -158,6 +164,9 @@ async def import_data(files: list[UploadFile], db: Database, current_user: Curre
             db.add(user)
 
         db.commit()
+
+    if refresh_analysis:
+        update_conversation_analysis(conversation, db)
 
     return {"status": "success"}
 
