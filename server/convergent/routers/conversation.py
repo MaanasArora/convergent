@@ -304,9 +304,40 @@ async def delete_conversation(
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     if conversation.author != current_user:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this conversation"
+        )
+
+    # delete comments, votes, users, and analysis related to this conversation
+    db.query(models.UserPca).filter(
+        models.UserPca.conversation_id == conversation_id
+    ).delete(synchronize_session=False)
+
+    db.query(models.UserCluster).filter(
+        models.UserCluster.conversation_id == conversation_id
+    ).delete(synchronize_session=False)
+
+    db.query(models.Vote).filter(
+        models.Vote.comment_id.in_(
+            db.query(models.Comment.id).filter(
+                models.Comment.conversation_id == conversation_id
+            )
+        )
+    ).delete(synchronize_session=False)
+
+    db.query(models.Comment).filter(
+        models.Comment.conversation_id == conversation_id
+    ).delete(synchronize_session=False)
+
+    db.query(models.User).filter(
+        models.User.id.in_(
+            db.query(models.Comment.user_id).filter(
+                models.Comment.conversation_id == conversation_id
+            )
+        )
+    ).delete(synchronize_session=False)
 
     db.delete(conversation)
     db.commit()
 
-    return {"detail": "Conversation deleted successfully", "id": conversation_id}
+    return {"status": "deleted"}
