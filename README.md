@@ -1,5 +1,7 @@
 # Convergent
 
+***Note: this repository is now archived. Please find this project in active development at https://github.com/choruslabs/chorus***
+
 This is an open-source web application implementing a polis-like algorithm for mapping high-dimensional opinion spaces.
 
 ## Installation
@@ -80,3 +82,4 @@ To run in storybook mode:
 ```bash
 npm run storybook
 ```
+
